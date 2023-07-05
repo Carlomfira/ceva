@@ -1,0 +1,226 @@
+var employees = [
+  {
+    id: 1,
+    name: "John Doe",
+    department: "Departament 1",
+    position: "Manager"
+  },
+  {
+    id: 2,
+    name: "Jane Smith",
+    department: "Departament 2",
+    position: "Analyst"
+  },
+  // Adăugați mai mulți angajați aici
+];
+
+var departments = [
+  {
+    id: 1,
+    name: "Departament 1"
+  },
+  {
+    id: 2,
+    name: "Departament 2"
+  },
+  // Adăugați mai multe departamente aici
+];
+
+var currentPage = 1;
+var employeesPerPage = 5;
+
+var employeeTableBody = document.getElementById("employee-table-body");
+var searchFilter = document.getElementById("search-filter");
+var departmentFilter = document.getElementById("department-filter");
+var currentDepartment = "all";
+
+var changes = [];
+
+function displayEmployees() {
+  employeeTableBody.innerHTML = "";
+
+  var filteredEmployees = employees;
+
+  if (currentDepartment !== "all") {
+    filteredEmployees = employees.filter(function(employee) {
+      return employee.department === currentDepartment;
+    });
+  }
+
+  var searchValue = searchFilter.value.toLowerCase();
+
+  if (searchValue !== "") {
+    filteredEmployees = filteredEmployees.filter(function(employee) {
+      return employee.name.toLowerCase().includes(searchValue);
+    });
+  }
+
+  var startIndex = (currentPage - 1) * employeesPerPage;
+  var endIndex = startIndex + employeesPerPage;
+
+  var paginatedEmployees = filteredEmployees.slice(startIndex, endIndex);
+
+  paginatedEmployees.forEach(function(employee) {
+    var row = document.createElement("tr");
+
+    var nameCell = document.createElement("td");
+    nameCell.textContent = employee.name;
+    row.appendChild(nameCell);
+
+    var departmentCell = document.createElement("td");
+    departmentCell.textContent = employee.department;
+    row.appendChild(departmentCell);
+
+    var positionCell = document.createElement("td");
+    positionCell.textContent = employee.position;
+    row.appendChild(positionCell);
+
+    var actionsCell = document.createElement("td");
+
+    var editButton = document.createElement("button");
+    editButton.textContent = "Editează";
+    editButton.onclick = function() {
+      editEmployee(employee.id);
+    };
+    actionsCell.appendChild(editButton);
+
+    var deleteButton = document.createElement("button");
+    deleteButton.textContent = "Șterge";
+    deleteButton.onclick = function() {
+      deleteEmployee(employee.id);
+    };
+    actionsCell.appendChild(deleteButton);
+
+    row.appendChild(actionsCell);
+
+    employeeTableBody.appendChild(row);
+  });
+
+  document.getElementById("current-page").textContent = "Pagina " + currentPage;
+}
+
+function updateDepartments() {
+  var departmentOptions = departments.map(function(department) {
+    return "<option value='" + department.name + "'>" + department.name + "</option>";
+  });
+
+  departmentOptions.unshift("<option value='all'>Toate</option>");
+
+  departmentFilter.innerHTML = departmentOptions.join("");
+}
+
+function addEmployee() {
+  var name = prompt("Introduceți numele angajatului:");
+  var department = prompt("Introduceți departamentul angajatului:");
+  var position = prompt("Introduceți poziția angajatului:");
+
+  var id = employees.length + 1;
+
+  var newEmployee = {
+    id: id,
+    name: name,
+    department: department,
+    position: position
+  };
+
+  employees.push(newEmployee);
+  changes.push(newEmployee);
+
+  displayEmployees();
+}
+
+function addDepartment() {
+  var departmentName = prompt("Introduceți numele departamentului:");
+
+  var id = departments.length + 1;
+
+  var newDepartment = {
+    id: id,
+    name: departmentName
+  };
+
+  departments.push(newDepartment);
+  changes.push(newDepartment);
+
+  updateDepartments();
+  displayEmployees();
+}
+
+function editEmployee(id) {
+  var employee = employees.find(function(employee) {
+    return employee.id === id;
+  });
+
+  var newName = prompt("Introduceți noul nume:", employee.name);
+  var newDepartment = prompt("Introduceți noul departament:", employee.department);
+  var newPosition = prompt("Introduceți noua poziție:", employee.position);
+
+  var updatedEmployee = {
+    id: employee.id,
+    name: newName,
+    department: newDepartment,
+    position: newPosition
+  };
+
+  employees = employees.map(function(emp) {
+    if (emp.id === id) {
+      return updatedEmployee;
+    }
+    return emp;
+  });
+
+  changes.push(updatedEmployee);
+
+  displayEmployees();
+}
+
+function deleteEmployee(id) {
+  var index = employees.findIndex(function(employee) {
+    return employee.id === id;
+  });
+
+  if (index !== -1) {
+    var deletedEmployee = employees[index];
+    employees.splice(index, 1);
+    changes.push({ id: deletedEmployee.id, deleted: true });
+
+    displayEmployees();
+  }
+}
+
+function previousPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    displayEmployees();
+  }
+}
+
+function nextPage() {
+  var maxPage = Math.ceil(employees.length / employeesPerPage);
+
+  if (currentPage < maxPage) {
+    currentPage++;
+    displayEmployees();
+  }
+}
+
+function saveChanges() {
+  if (changes.length === 0) {
+    alert("Nu există modificări de salvat.");
+    return;
+  }
+
+  // Aici poți adăuga logica de trimitere a modificărilor către server sau de salvare într-o bază de date
+
+  changes = [];
+  alert("Modificările au fost salvate cu succes.");
+}
+
+searchFilter.addEventListener("input", displayEmployees);
+departmentFilter.addEventListener("change", function() {
+  currentDepartment = departmentFilter.value;
+  displayEmployees();
+});
+
+updateDepartments();
+displayEmployees();
